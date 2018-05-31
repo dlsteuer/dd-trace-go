@@ -41,6 +41,7 @@ func (t *Tracer) startSpanWithOptions(operationName string, options ot.StartSpan
 	var hasParent bool
 	var parent *Span
 	var span *ddtrace.Span
+	var parentBaggage map[string]string
 
 	for _, ref := range options.References {
 		ctx, ok := ref.ReferencedContext.(SpanContext)
@@ -54,6 +55,7 @@ func (t *Tracer) startSpanWithOptions(operationName string, options ot.StartSpan
 			hasParent = true
 			context = ctx
 			parent = ctx.span
+			parentBaggage = ctx.baggage
 		}
 	}
 
@@ -98,6 +100,13 @@ func (t *Tracer) startSpanWithOptions(operationName string, options ot.StartSpan
 			for k, v := range parent.context.baggage {
 				otSpan.context.baggage[k] = v
 			}
+		}
+	}
+
+	if len(parentBaggage) > 0 {
+		otSpan.context.baggage = make(map[string]string, len(parentBaggage))
+		for k, v := range parentBaggage {
+			otSpan.context.baggage[k] = v
 		}
 	}
 
